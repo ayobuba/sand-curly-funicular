@@ -2,7 +2,7 @@
 
 ## **1. Updated High-Level Network Diagram**
 
-Your AWS **Multi-Environment Architecture** follows a **multi-account structure** under **AWS Organizations**, leveraging **AWS Resource Access Manager (RAM)** to securely share resources across **Dev, Test, and Prod accounts**. 
+The AWS **Multi-Environment Architecture** follows a **multi-account structure** under **AWS Organizations**, leveraging **AWS Resource Access Manager (RAM)** to securely share resources across **Dev, Test, and Prod accounts**. 
 
 ### **Key Components:**
 - **AWS Organizations**: Enforces **multi-account isolation** for **Dev, Test, and Prod** environments.
@@ -19,13 +19,16 @@ Your AWS **Multi-Environment Architecture** follows a **multi-account structure*
 - **AWS KMS**: Encrypts **RDS, S3, and sensitive data**.
 - **Centralized Logging (S3)**: All accounts store **logs in a shared S3 bucket**.
 
-The architecture diagram (generated using Python **mingrammer’s `diagrams` library**) visually represents these components.
+The architecture diagram (generated using Python **mingrammer's [`diagrams` library](https://diagrams.mingrammer.com/docs/nodes/aws)**) visually represents these components.
+
 ![AWS Shared VPC Architecture - Multi-Environment Design](scripts/aws_shared_vpc_architecture-3.png "AWS Multi-Environment Architecture Diagram")
 ---
 
 ## **2. Automation Example (Terraform Code)**
 
-Your Terraform implementation **automates AWS RAM-based resource sharing** across Dev, Test, and Prod environments.
+The Terraform implementation **automates AWS RAM-based resource sharing** across Dev, Test, and Prod environments.
+> 📌 **Note**: The Terraform code and scripts for this implementation is available in my personal [GitHub repository](https://github.com/ayobuba/sand-curly-funicular).
+
 
 ### **Key Features:**
 ✅ **AWS RAM Resource Sharing** for **cross-account resource access**.  
