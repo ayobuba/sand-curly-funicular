@@ -2,7 +2,7 @@
 
 ## **1. Updated High-Level Network Diagram**
 
-The AWS **Multi-Environment Architecture** follows a **multi-account structure** under **AWS Organizations**, leveraging **AWS Resource Access Manager (RAM)** to securely share resources across **Dev, Test, and Prod accounts**. 
+The AWS **Multi-Environment Architecture** follows a **multi-account structure** under **AWS Organizations**, leveraging **[AWS Resource Access Manager (RAM)](https://aws.amazon.com/ram/)** to securely share resources across **Dev, Test, and Prod accounts**. 
 
 ### **Key Components:**
 - **AWS Organizations**: Enforces **multi-account isolation** for **Dev, Test, and Prod** environments.
@@ -163,4 +163,4 @@ output "resource_share_arns" {
 
 ## **Final Thoughts**
 
-This design ensures **secure, scalable, and cost-effective** AWS infrastructure using **Terraform + AWS RAM** for **cross-account VPC resource sharing**. Let me know if you need further refinements or additions! 🚀
+This design ensures **secure, scalable, and cost-effective** AWS infrastructure using **Terraform + AWS RAM** for **cross-account VPC resource sharing**.
