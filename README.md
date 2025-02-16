@@ -79,6 +79,29 @@ terraform {
 }
 ```
 
+#### **🔹 Terraform Module Use (VPC and RAM)**
+```hcl
+module "shared-vpc" {
+  source       = "../../modules/vpc"
+  vpc_cidr     = var.vpc_cidr
+  vpc_name     = "shared-vpc"
+  az           = var.az
+
+  # We define subnets for dev, test, and prod
+  subnets = {
+    dev     = var.dev_subnet_cidr
+    test    = var.staging_subnet_cidr
+    prod    = var.prod_subnet_cidr
+  }
+}
+
+module "resource-access-manager" {
+  source        = "../../modules/ram"
+  environments  = var.environments  # map of environment->account_arn
+  subnet_arns   = module.shared-vpc.subnet_arns
+}
+```
+
 #### **🔹 Terraform Outputs**
 ```hcl
 output "resource_share_arns" {
@@ -154,6 +177,8 @@ output "resource_share_arns" {
 1. **How would you optimize costs?**
    - Use **Reserved Instances and Savings Plans** for predictable workloads.
    - Leverage **Spot Instances** for non-critical tasks.
+   - Leverage **AWS Nuke** to remove non-critical workloads or managed services incase it is forgotten.
+   - setup **budgets and alerts** to monitor costs.
 
 2. **What tools would you use for monitoring?**
    - Use **CloudWatch, AWS X-Ray, and centralized logging in S3**.
