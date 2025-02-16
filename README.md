@@ -1,8 +1,17 @@
+## Executive Summary
+The AWS **Multi-Environment Architecture** follows a **multi-account structure** under **AWS Organizations**, leveraging **[AWS Resource Access Manager (RAM)](https://aws.amazon.com/ram/)** to securely share resources across e.g **Dev and Prod accounts**. resource sharing. Key features include:
+- Centralized security and compliance management
+- Cost-effective resource sharing
+- Automated deployment using Terraform
+- Comprehensive monitoring and observability
+
 # **AWS Multi-Environment Cloud Architecture**
+## Architecture Decisions
+1. **AWS RAM**: Chosen for secure resource sharing to reduce costs and complexity
+2. **Multi-Account Strategy**: Provides strong isolation between environments
+3. **Centralized NAT Gateway**: Reduces costs while maintaining security
 
 ## **1. Updated High-Level Network Diagram**
-
-The AWS **Multi-Environment Architecture** follows a **multi-account structure** under **AWS Organizations**, leveraging **[AWS Resource Access Manager (RAM)](https://aws.amazon.com/ram/)** to securely share resources across **Dev, Test, and Prod accounts**. 
 
 ### **Key Components:**
 - **AWS Organizations**: Enforces **multi-account isolation** for **Dev, Test, and Prod** environments.
@@ -39,7 +48,7 @@ The Terraform implementation **automates AWS RAM-based resource sharing** across
 
 ### **Terraform Code Snippets:**
 
-#### **🔹 AWS RAM Resource Share**
+#### **AWS RAM Resource Share**
 ```hcl
 resource "aws_ram_resource_share" "share" {
   for_each                 = var.environments
@@ -48,7 +57,7 @@ resource "aws_ram_resource_share" "share" {
 }
 ```
 
-#### **🔹 AWS RAM Subnet Association**
+#### **2. AWS RAM Subnet Association**
 ```hcl
 resource "aws_ram_resource_association" "subnet_association" {
   for_each = var.subnet_arns
@@ -57,7 +66,7 @@ resource "aws_ram_resource_association" "subnet_association" {
 }
 ```
 
-#### **🔹 AWS RAM Principal Association**
+#### **AWS RAM Principal Association**
 ```hcl
 resource "aws_ram_principal_association" "principal" {
   for_each = var.environments
@@ -66,7 +75,7 @@ resource "aws_ram_principal_association" "principal" {
 }
 ```
 
-#### **🔹 Terraform Backend Configuration (S3 State)**
+#### **Terraform Backend Configuration (S3 State)**
 ```hcl
 terraform {
   backend "s3" {
@@ -79,7 +88,7 @@ terraform {
 }
 ```
 
-#### **🔹 Terraform Module Use (VPC and RAM)**
+#### **Terraform Module Use (VPC and RAM)**
 ```hcl
 module "shared-vpc" {
   source       = "../../modules/vpc"
@@ -102,13 +111,42 @@ module "resource-access-manager" {
 }
 ```
 
-#### **🔹 Terraform Outputs**
+#### **Terraform Outputs**
 ```hcl
 output "resource_share_arns" {
   value = { for k, share in aws_ram_resource_share.share : k => share.arn }
 }
 ```
 
+#### **AWS Config Rule for ISO 27001 Compliance**
+```hcl
+resource "aws_config_config_rule" "iso27001_rds_encryption" {
+  name        = "rds-storage-encryption"
+  description = "Ensure RDS is encrypted to comply with ISO 27001"
+  source {
+    owner             = "AWS"
+    source_identifier = "RDS_STORAGE_ENCRYPTED"
+  }
+}
+
+### ISO 27001 Controls Implementation
+   resource "aws_config_config_rule" "iam_password_policy" {
+     name = "iam-password-policy"
+     source {
+       owner             = "AWS"
+       source_identifier = "IAM_PASSWORD_POLICY"
+     }
+     input_parameters = jsonencode({
+       RequireUppercaseCharacters = "true"
+       RequireLowercaseCharacters = "true"
+       RequireSymbols             = "true"
+       RequireNumbers            = "true"
+       MinimumPasswordLength     = "14"
+       PasswordReusePrevention   = "24"
+       MaxPasswordAge            = "90"
+     })
+   }
+```
 ---
 
 ## **3. Key Recommendations**
@@ -119,26 +157,27 @@ output "resource_share_arns" {
 - **KMS encrypts all RDS, S3, and sensitive data**.
 - **Centralized logging in S3** for compliance auditing.
 
-### 🚀 **Scalability & High Availability**
+
+###  **Scalability & High Availability**
 - **Multi-AZ RDS** ensures automatic failover.
 - **Auto Scaling Groups (ASG) & ECS** handle increasing traffic.
 - **AWS RAM prevents redundant resources** across environments.
 
-### 💰 **Cost Optimization**
+### 💵 **Cost Optimization**
 - **Cross-account resource sharing via AWS RAM** reduces duplicated services.
 - **Right-sized EC2 & Reserved Instances** optimize costs.
 - **S3 Centralized Logging** minimizes per-account logging expenses.
 
 ---
 
-## **4. Architecture and Design Answers**
+## **I. Architecture and Design Answers**
 
-1. **How would you improve the current architecture to support future growth?**
+1. **How would you improve the current architecture to support future growth and increased workloads?**
    - Implement **VPC Peering** or **AWS Transit Gateway** for better interconnectivity.
    - Adopt **serverless** architectures where applicable.
    - Use **EKS or ECS Fargate** for containerized workloads.
 
-2. **How would you support multiple environments (dev, test, prod)?**
+2. **What approach would you take to support multiple environments (dev, test, prod)?**
    - Maintain separate **AWS accounts per environment**.
    - Use **AWS RAM** for sharing necessary resources securely.
 
@@ -149,40 +188,48 @@ output "resource_share_arns" {
 
 ---
 
-## **5. Automation and Terraform Answers**
+## **II. Automation and Terraform Answers**
 
-1. **How would you automate deployments?**
+1. **How would you approach automating the deployment of this environment?**
    - Use **Terraform with modularized infrastructure**.
    - Implement **CI/CD pipelines with GitHub Actions or AWS CodePipeline**.
 
-2. **How would you manage Terraform state securely?**
-   - Store state in **S3 with encryption**, using **DynamoDB for state locking**.
+2. **What would be your strategy for securely managing Terraform state in a multi-environment or multi-account setup?**
+   - S3 Backend Configuration with Native Locking for statefiles (DynamoDB not needed when it is released to a major version)
+   - MFA delete protection
+   - CloudWatch alerts for state modifications
+
 
 ---
 
-## **6. Compliance and Security Answers**
+## **III. Compliance and Security Answers**
 
-1. **How would you secure sensitive data?**
+1. **How would you secure sensitive client data in this environment??**
    - Use **AWS KMS encryption** for data at rest.
    - Apply **IAM policies with least privilege**.
 
-2. **How would you ensure compliance?**
-   - Use **AWS Config, GuardDuty, and Security Hub**.
+2. **How would your design ensure compliance with industry standard i.e ISO 27001, GDPR, or similar standards.?**
+   - Use **AWS Config** to enforce compliance rules.
    - Maintain **audit logs with CloudTrail and centralized S3 logging**.
 
----
+
 
 ## **7. Cost and Observability Answers**
 
 1. **How would you optimize costs?**
    - Use **Reserved Instances and Savings Plans** for predictable workloads.
    - Leverage **Spot Instances** for non-critical tasks.
-   - Leverage **AWS Nuke** to remove non-critical workloads or managed services incase it is forgotten.
+   - **[cloud-nuke](https://github.com/gruntwork-io/cloud-nuke)**: A tool for cleaning up AWS resources. Useful for:
+     - Removing non-critical workloads or managed services if forgotten
+     - Cleaning up development and testing environments
+     - Cost optimization by ensuring unused resources are removed
    - setup **budgets and alerts** to monitor costs.
 
 2. **What tools would you use for monitoring?**
-   - Use **CloudWatch, AWS X-Ray, and centralized logging in S3**.
-   - Implement **custom dashboards in Grafana or Datadog**.
+   - Use **CloudWatch** for API activity and centralized logging.
+   - Use **AWS X-Ray** for tracing and debugging
+   - **AWS CloudTrail** for auditing and compliance of all API's.
+
 
 ---
 

@@ -9,12 +9,16 @@ from diagrams.aws.storage import S3
 # Define output file path
 diagram_path = "aws_shared_vpc_architecture-3"
 
+graph_attr = {
+    "dpi": "300"
+}
 with Diagram(
         "AWS Shared VPC Architecture (With Compliance)",
         show=False,
         filename=diagram_path,
         outformat="png",
-        direction="TB"
+        direction="TB",
+        graph_attr=graph_attr
 ):
     # Shared VPC (AWS Account 1)
     with Cluster("Shared VPC (AWS Account 1)"):
